@@ -1,0 +1,46 @@
+groups:
+  default: ['web', 'pg']
+  data: ['pg']
+containers:
+  web: &web
+    dockerfile: git@github.com:gregory/hello-world-app-ruby-sinatra.git
+    image: helloworld
+    start:
+      detach: true
+    run:
+      attach: true
+      interactive: true
+      tty: true
+      publish:
+        - '80:5000'
+      link:
+        - pg:my_pg
+      volume:
+        # this is assuming that you've clone the repo into ./code
+        - ./code:/opt/services/hello-world-ruby
+      env:
+        - BC_CLIENT_ID=change_me
+        - BC_CLIENT_SECRET=change_me
+        - APP_URL=https://path.to.app.example.com
+        - SESSION_SECRET=change_me
+        - BC_AUTH_SERVICE=https://login.bigcommerce.com
+        - BC_API_ENDPOINT=https://api.bigcommerce.com
+        - SESSION_SECRET=this_is_a_secret_to_support_signed_cookies
+        - DATABASE_URL=postgres://admin:foobar@my_pg/admin
+  web_test:
+    <<: *web
+    run:
+      publish:
+      # This overwrite the default cmd to create a new db and run set it up.
+      cmd: bash -c 'ls -al'
+  pg:
+    image: mini/postgresql
+    run:
+      detach: true
+      publish:
+        - '5432:5432'
+      env:
+        # Here we are setting an environnment variable (POSTGRESQL_PASS) to password
+        - POSTGRESQL_PASS=foobar
+      volume:
+        - ./data/:/data'
